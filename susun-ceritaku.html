@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urutkan Ceritaku • Tri Indahsari Prastina R.</title>
+    <script>
+    let titleText = " Urutkan Ceritaku • Tri Indahsari Prastina R. •";
+    function rotateTitle() {
+      titleText = titleText.substring(1) + titleText.charAt(0);
+      document.title = titleText;
+    }
+    setInterval(rotateTitle, 300);
+  </script>
+  <style>
+    body {
+      font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background-color: #fff6dc;
+      margin: 0;
+      padding: 15px;
+      text-align: center;
+    }
+
+    h1{margin: 5px;color: #4b2b6b;}
+    h2{margin: 5px;text-transform: uppercase;}
+
+    #game-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 80px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .column {
+      background-color: #ffffff;
+      border-radius: 15px;
+      gap: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      padding: 20px;
+      padding-bottom: 10px;
+      min-width: 760px; /* agar muat box 700px + padding */
+      min-height: 550px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .column-title {
+      font-weight: bold;
+      font-size: 18px;
+      color: #4b2b6b;
+    }
+
+    .box {
+      width: 700px;
+      height: 95px;
+      padding: 25px;
+      background: white;
+      border-radius: 10px;
+      display: flex;
+      text-align: justify;
+      cursor: grab;
+      user-select: none;
+      transition: all 0.25s ease;
+      font-size: 16px;
+      line-height: 1.4em;
+    }
+
+    .left-box {
+      border: 2px solid white;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);     
+    }
+
+    .right-box {
+      border: 2px dotted #999;
+    }
+
+    .right-box.filled {
+      border: 2px solid #e1a600;
+    }
+
+    .box.dragging {
+      opacity: 0.7;
+      transform: scale(1.01);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+      z-index: 999;
+      cursor: grabbing;
+    }
+
+    #buttons {
+      margin-top: 30px;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 5px 10px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      transform: scale(1.04);
+    }
+
+    #check, #reset {
+      background-color: #ffd86b;
+      color: #4b2b6b;
+    }
+
+    .w3-green {
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      width: 50%;
+      margin: 20px auto;
+      display: none;
+    }
+
+    .w3-red {
+      background-color: #ff4646;
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      width: 50%;
+      margin: 20px auto;
+      display: none;
+    }
+
+    #alert {
+      transition: opacity 0.6s ease;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Ikon info di pojok kanan atas */
+    #info-icon {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 15px;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      padding-top: 100px;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: auto;
+      padding: 20px 30px;
+      width: 60%;
+      max-width: 500px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      position: relative;
+      color: #333;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .close-button {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      position: absolute;
+      right: 20px;
+      top: 10px;
+    }
+
+    .close-button:hover {
+      color: #4b2b6b;
+    }
+
+@media (max-width: 768px) {
+  .column {
+    min-width: auto;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .box {
+    width: 90%;
+    height: auto;
+    min-height: 80px;
+    font-size: 14px;
+  }
+
+  #game-container {
+    gap: 30px;
+    flex-direction: column;
+  }
+}
+  </style>
+</head>
+<body>
+  <audio id="applause-sound" src="applause.mp3" preload="auto"></audio>
+  <h1>Urutkan Ceritaku</h1>
+  <h2 id="story-title">Kelinci di Kebun Sekolah</h2>
+
+  <div id="game-container">
+    <div class="column" id="left-column">
+      <div class="column-title">Susunan Cerita</div>
+      <div class="box left-box" draggable="true"></div>
+      <div class="box left-box" draggable="true"></div>
+      <div class="box left-box" draggable="true"></div>
+    </div>
+
+    <div class="column" id="right-column">
+      <div class="column-title">Urutan Cerita</div>
+      <div class="box right-box"></div>
+      <div class="box right-box"></div>
+      <div class="box right-box"></div>
+    </div>
+  </div>
+
+  <div id="buttons">
+    <button id="check">✅Cek Jawaban</button>
+    <button id="reset">🔄Reset</button>
+  </div>
+
+  <div id="alert" class="w3-panel w3-hide"></div>
+
+  <canvas id="confetti"></canvas>
+
+  <!-- Ikon Informasi di Pojok Kanan Atas -->
+  <div id="info-icon" title="Cara Main">ℹ️</div>
+
+  <!-- Modal Box -->
+  <div id="info-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h3>Cara Main:</h2>
+      <ol>
+        <li>Susun bagian setiap penggalan cerita.</li>
+        <li>Drag setiap bagian cerita dari <b>Susunan Cerita</b> ke <b>Urutan Cerita</b>.</li>
+        <li>Tombol :
+          <ul>
+            <li><b>Cek Jawaban</b> = cek jawaban & hasil</li>
+            <li><b>Reset</b> = memulai ulang</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    const stories = [
+      {
+        title: "Liburan ke Pantai",
+        parts: {
+          awal: "Rina dan keluarganya pergi ke pantai pada hari Minggu. Mereka membawa bekal dan mainan pasir. Cuaca hari itu sangat cerah dan menyenangkan.",
+          tengah: "Sesampainya di pantai, Rina langsung bermain pasir. Ayah dan ibunya duduk di tikar sambil menikmati bekal. Adik Rina bermain air di pinggir laut.",
+          akhir: "Setelah puas bermain, mereka membersihkan badan. Mereka pulang dengan hati senang. Rina ingin liburan ke pantai lagi lain waktu."
+        }
+      },
+      {
+        title: "Menanam Bunga",
+        parts: {
+          awal: "Ani suka sekali dengan bunga. Ia ingin menanam bunga di halaman rumah. Ibu memberikan bibit bunga mawar dan melatinya.",
+          tengah: "Ani menggali tanah dengan sekop kecil. Ia menanam bibit bunga dengan hati-hati. Lalu ia menyiram bunga itu dengan air.",
+          akhir: "Setiap pagi, Ani rajin menyiram tanamannya. Setelah beberapa minggu, bunganya mulai tumbuh. Ani merasa sangat senang dan bangga."
+        }
+      },
+      {
+        title: "Sepeda Baru",
+        parts: {
+          awal: "Doni mendapatkan sepeda baru dari ayah. Sepeda itu berwarna merah dan mengkilap. Doni sangat senang menerimanya.",
+          tengah: "Ia langsung mencoba mengayuh sepeda di halaman rumah. Awalnya Doni belum bisa seimbang. Tapi ia terus mencoba dengan semangat.",
+          akhir: "Akhirnya Doni bisa mengendarai sepeda dengan lancar. Ayah tersenyum bangga melihatnya. Doni pun semakin percaya diri."
+        }
+      },
+      {
+        title: "Hari Pertama Sekolah",
+        parts: {
+          awal: "Hari ini adalah hari pertama Dika masuk sekolah. Ia merasa gugup dan bersemangat. Ibu mengantarnya sampai ke kelas.",
+          tengah: "Di kelas, Dika berkenalan dengan teman-teman baru. Guru menyambut mereka dengan ramah. Mereka mulai belajar dengan menyenangkan.",
+          akhir: "Dika pulang ke rumah dengan cerita yang seru. Ia jadi suka pergi ke sekolah. Setiap hari, Dika bangun pagi dengan semangat."
+        }
+      },
+      {
+        title: "Kucing Peliharaan",
+        parts: {
+          awal: "Tina memelihara seekor kucing bernama Milo. Milo berbulu putih dan matanya bulat. Ia sangat manja dan lucu.",
+          tengah: "Setiap hari, Tina memberi makan dan membersihkan tempat tidur Milo. Ia juga sering bermain bola kecil bersama Milo. Milo suka tidur di pangkuan Tina.",
+          akhir: "Tina sangat sayang pada Milo. Milo juga tampak bahagia tinggal bersama Tina. Mereka selalu bermain bersama setiap sore."
+        }
+      },
+      {
+        title: "Pergi ke Pasar",
+        parts: {
+          awal: "Pagi-pagi, Budi ikut ibu pergi ke pasar. Pasar ramai sekali dengan banyak orang. Ibu ingin membeli sayur dan buah.",
+          tengah: "Budi membantu ibu membawa tas belanja. Ia juga memilih apel dan jeruk. Penjualnya ramah dan memberikan harga murah.",
+          akhir: "Setelah selesai belanja, mereka pulang ke rumah. Ibu memasak sayur dari pasar. Budi makan dengan lahap karena masakannya enak."
+        }
+      },
+      {
+        title: "Kupu-Kupu di Taman",
+        parts: {
+          awal: "Di taman belakang rumah, ada banyak bunga. Sore itu, Lala melihat seekor kupu-kupu terbang. Kupu-kupu itu berwarna biru dan sangat cantik.",
+          tengah: "Lala berlari mengikuti kupu-kupu itu. Ia mencoba menangkapnya dengan tangan. Tapi kupu-kupu itu terbang semakin tinggi.",
+          akhir: "Akhirnya Lala berhenti dan duduk di bangku taman. Ia senang bisa melihat kupu-kupu walau tidak berhasil menangkapnya. Lala ingin sering bermain di taman lagi."
+        }
+      },
+      {
+        title: "Membuat Layang-Layang",
+        parts: {
+          awal: "Reno ingin membuat layang-layang sendiri. Ia meminta bantuan kakaknya. Mereka menyiapkan bambu, kertas, dan tali.",
+          tengah: "Kakaknya mengajari Reno cara merangkai layang-layang. Reno memotong kertas dan menempelkannya ke rangka bambu. Setelah jadi, mereka mengecatnya agar lebih indah.",
+          akhir: "Layang-layang itu diterbangkan di lapangan. Angin bertiup kencang dan layang-layang pun terbang tinggi. Reno sangat bangga dan gembira."
+        }
+      },
+      {
+        title: "Belajar Memasak",
+        parts: {
+          awal: "Sari ingin belajar memasak bersama ibu. Hari itu mereka membuat kue bolu. Ibu mengajari langkah-langkahnya dengan sabar.",
+          tengah: "Sari mencampur bahan dan mengaduk adonan. Lalu mereka memasukkan adonan ke dalam oven. Aroma kue pun tercium ke seluruh rumah.",
+          akhir: "Setelah matang, mereka mencicipi kue buatan sendiri. Rasanya enak dan lembut. Sari jadi ingin sering membantu ibu di dapur."
+        }
+      },
+      {
+        title: "Bermain di Hujan",
+        parts: {
+          awal: "Sore itu hujan turun cukup deras. Edo melihat anak-anak bermain hujan di halaman. Ia ingin ikut bermain juga.",
+          tengah: "Edo meminta izin pada ibu dan memakai jas hujan. Ia berlari bersama teman-temannya. Mereka melompat di genangan air dan tertawa riang.",
+          akhir: "Setelah hujan reda, Edo masuk ke rumah. Ia mengganti baju dan minum teh hangat. Hari itu sangat menyenangkan baginya."
+        }
+      }
+    ];
+
+    let currentStory;
+    let leftBoxes, rightBoxes;
+    let draggedBox = null;
+    let draggedText = null;
+    let confettiInterval = null;
+let isTouch = false;
+let touchClone = null;
+let currentHoverBox = null;
+
+    const infoIcon = document.getElementById("info-icon");
+    const modal = document.getElementById("info-modal");
+    const closeBtn = document.querySelector(".close-button");
+
+    function initGame() {
+      const randomStory = stories[Math.floor(Math.random() * stories.length)];
+      currentStory = randomStory;
+      document.getElementById("story-title").textContent = randomStory.title;
+
+      const parts = [randomStory.parts.awal, randomStory.parts.tengah, randomStory.parts.akhir];
+      const shuffled = [...parts].sort(() => Math.random() - 0.5);
+
+      leftBoxes = document.querySelectorAll(".left-box");
+      rightBoxes = document.querySelectorAll(".right-box");
+      document.getElementById("alert").style.display = "none";
+
+      leftBoxes.forEach((box, i) => {
+        box.textContent = shuffled[i];
+        box.setAttribute("draggable", "true");
+        box.addEventListener("dragstart", dragStart);
+        box.addEventListener("dragend", dragEnd);
+      });
+
+      rightBoxes.forEach((box) => {
+        box.textContent = "";
+        box.classList.remove("filled");
+        box.setAttribute("draggable", "true");
+        box.addEventListener("dragstart", dragStart);
+        box.addEventListener("dragend", dragEnd);
+        box.addEventListener("dragover", dragOver);
+        box.addEventListener("dragleave", dragLeave);
+        box.addEventListener("drop", drop);
+      });
+    }
+
+    function dragStart(e) {
+      draggedBox = e.target;
+      draggedText = e.target.textContent.trim();
+      e.target.classList.add("dragging");
+    }
+
+    function dragEnd(e) {
+      e.target.classList.remove("dragging");
+      draggedBox = null;
+      draggedText = null;
+    }
+
+    function dragOver(e) {
+      e.preventDefault();
+      if (e.target.classList.contains("right-box")) {
+        e.target.style.backgroundColor = "#fff6dc";
+      }
+    }
+
+    function dragLeave(e) {
+      if (e.target.classList.contains("right-box")) {
+        e.target.style.backgroundColor = "white";
+      }
+    }
+
+    function drop(e) {
+      e.preventDefault();
+      const targetBox = e.target;
+      if (!targetBox.classList.contains("right-box")) return;
+      targetBox.style.backgroundColor = "white";
+
+      // Jika tidak ada teks yang sedang di-drag, abaikan
+      if (!draggedBox || !draggedText) return;
+
+      // --- Dari kiri ke kanan ---
+      if (draggedBox.classList.contains("left-box")) {
+        if (targetBox.textContent.trim() === "") {
+          targetBox.textContent = draggedText;
+          targetBox.classList.add("filled");
+
+          // Kosongkan box kiri
+          draggedBox.textContent = "";
+          draggedBox.classList.remove("filled");
+          draggedBox.draggable = false;
+          draggedBox.style.boxShadow = "none";
+        } else {
+          // Tukar isi antara kiri dan kanan (opsional)
+          const temp = targetBox.textContent;
+          targetBox.textContent = draggedText;
+          draggedBox.textContent = temp;
+
+          targetBox.classList.add("filled");
+          draggedBox.draggable = !!draggedBox.textContent.trim(); // aktifkan hanya jika tidak kosong
+        }
+      }
+
+      // --- Dari kanan ke kanan (swap antar box kanan) ---
+      else if (draggedBox.classList.contains("right-box")) {
+        if (targetBox === draggedBox) return; // jangan drop ke diri sendiri
+
+        const temp = targetBox.textContent;
+        targetBox.textContent = draggedBox.textContent;
+        draggedBox.textContent = temp;
+
+        // Update status draggable
+        targetBox.draggable = !!targetBox.textContent.trim();
+        draggedBox.draggable = !!draggedBox.textContent.trim();
+
+        // Update class filled
+        [targetBox, draggedBox].forEach(box => {
+          if (box.textContent.trim() !== "") {
+            box.classList.add("filled");
+          } else {
+            box.classList.remove("filled");
+          }
+        });
+      }
+
+      draggedBox = null;
+      draggedText = null;
+    }
+
+function touchStartHandler(e) {
+  draggedBox = e.target;
+  draggedText = e.target.textContent.trim();
+
+  if (!draggedText) return;
+
+  const touch = e.touches[0];
+
+  touchClone = draggedBox.cloneNode(true);
+  touchClone.style.position = "fixed";
+  touchClone.style.pointerEvents = "none";
+  touchClone.style.opacity = "0.8";
+  touchClone.style.zIndex = "1000";
+  touchClone.style.left = touch.clientX - 100 + "px";
+  touchClone.style.top = touch.clientY - 40 + "px";
+  document.body.appendChild(touchClone);
+}
+
+function touchEndHandler(e) {
+  if (touchClone) {
+    document.body.removeChild(touchClone);
+    touchClone = null;
+  }
+
+  const touch = e.changedTouches[0];
+  const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+
+  if (dropTarget && dropTarget.classList.contains("right-box")) {
+    const targetBox = dropTarget;
+
+    // --- dari kiri ke kanan ---
+    if (draggedBox.classList.contains("left-box")) {
+      if (targetBox.textContent.trim() === "") {
+        targetBox.textContent = draggedText;
+        targetBox.classList.add("filled");
+
+        draggedBox.textContent = "";
+        draggedBox.draggable = false;
+        draggedBox.style.boxShadow = "none";
+      } else {
+        const temp = targetBox.textContent;
+        targetBox.textContent = draggedText;
+        draggedBox.textContent = temp;
+      }
+    }
+
+    // --- swap antar kanan ---
+    else if (draggedBox.classList.contains("right-box") && targetBox !== draggedBox) {
+      const temp = targetBox.textContent;
+      targetBox.textContent = draggedBox.textContent;
+      draggedBox.textContent = temp;
+
+      [targetBox, draggedBox].forEach(box => {
+        if (box.textContent.trim()) {
+          box.classList.add("filled");
+        } else {
+          box.classList.remove("filled");
+        }
+      });
+    }
+  }
+
+  // 🧹 Reset highlight saat sentuhan berakhir
+  if (currentHoverBox) {
+    currentHoverBox.style.backgroundColor = "white";
+    currentHoverBox = null;
+  }
+
+  draggedBox = null;
+  draggedText = null;
+}
+
+
+function touchMoveHandler(e) {
+  if (!touchClone) return;
+  const touch = e.touches[0];
+
+  // Gerakkan clone
+  touchClone.style.left = touch.clientX - 100 + "px";
+  touchClone.style.top = touch.clientY - 40 + "px";
+
+  // Deteksi elemen di bawah jari
+  const elementUnderFinger = document.elementFromPoint(touch.clientX, touch.clientY);
+
+  if (elementUnderFinger && elementUnderFinger.classList.contains("right-box")) {
+    // Hapus highlight dari box sebelumnya
+    if (currentHoverBox && currentHoverBox !== elementUnderFinger) {
+      currentHoverBox.style.backgroundColor = "white";
+    }
+    currentHoverBox = elementUnderFinger;
+    currentHoverBox.style.backgroundColor = "#fff6dc";
+  } else {
+    // Jika keluar dari box kanan
+    if (currentHoverBox) {
+      currentHoverBox.style.backgroundColor = "white";
+      currentHoverBox = null;
+    }
+  }
+}
+
+    function showAlert(message, colorClass = "w3-green") {
+      const alertBox = document.getElementById("alert");
+      alertBox.className = `w3-panel ${colorClass}`;
+      alertBox.textContent = message;
+
+      alertBox.classList.remove("w3-hide");
+      alertBox.style.opacity = "1";
+
+      // Hilangkan otomatis setelah 3 detik (opsional)
+      setTimeout(() => {
+        alertBox.style.opacity = "0";
+        setTimeout(() => alertBox.classList.add("w3-hide"), 400);
+      }, 3000);
+    }
+
+    // Tombol Cek Jawaban
+    document.getElementById("check").addEventListener("click", () => {
+      const answer = [
+        currentStory.parts.awal,
+        currentStory.parts.tengah,
+        currentStory.parts.akhir
+      ];
+      const user = Array.from(rightBoxes).map(b => b.textContent.trim());
+      const alertBox = document.getElementById("alert");
+      const applause = document.getElementById("applause-sound");
+
+      // Reset tampilan alert
+      alertBox.style.display = "none";
+      alertBox.className = "w3-panel";
+
+      if (JSON.stringify(answer) === JSON.stringify(user)) {
+        // ✅ Jawaban benar
+        alertBox.classList.add("w3-green");
+        alertBox.textContent = "Selamat!!! Jawaban Anda benar.";
+        alertBox.style.display = "block";
+
+        // 🔊 Putar suara applause
+        applause.currentTime = 0;
+        applause.play();
+
+        // Kunci semua box
+        rightBoxes.forEach(b => b.setAttribute("draggable", "false"));
+        leftBoxes.forEach(b => b.setAttribute("draggable", "false"));
+
+        startConfetti();
+      } else {
+        // ❌ Jawaban salah
+        alertBox.classList.add("w3-red");
+        alertBox.textContent = "Urutan masih salah, ayo coba lagi!";
+        alertBox.style.display = "block";
+
+        // Pastikan user masih bisa edit ulang
+        rightBoxes.forEach(b => b.setAttribute("draggable", "true"));
+        leftBoxes.forEach(b => {
+          if (b.textContent.trim() !== "") b.setAttribute("draggable", "true");
+        });
+      }
+
+      // Sembunyikan alert setelah 3 detik
+      setTimeout(() => {
+        alertBox.style.display = "none";
+      }, 3000);
+    });
+
+    // Tombol Reset
+    document.getElementById("reset").addEventListener("click", () => {
+      window.location.reload();
+    });
+
+    // Konfeti berbentuk kertas
+    const confettiCanvas = document.getElementById("confetti");
+    const ctx = confettiCanvas.getContext("2d");
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    const confettis = [];
+
+    function startConfetti() {
+      confettis.length = 0;
+      for (let i = 0; i < 200; i++) {
+        confettis.push({
+          x: Math.random() * confettiCanvas.width,
+          y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+          w: 8 + Math.random() * 6,
+          h: 4 + Math.random() * 2,
+          color: `hsl(${Math.random() * 360}, 100%, 60%)`,
+          speed: 2 + Math.random() * 3,
+          angle: Math.random() * 360
+        });
+      }
+      animateConfetti();
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettis.forEach(c => {
+        c.y += c.speed;
+        c.angle += 5;
+        if (c.y > confettiCanvas.height) c.y = -10;
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.angle * Math.PI / 180);
+        ctx.fillStyle = c.color;
+        ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+        ctx.restore();
+      });
+      requestAnimationFrame(animateConfetti);
+    }
+
+    //modal
+    infoIcon.onclick = () => {
+      modal.style.display = "block";
+    };
+
+    closeBtn.onclick = () => {
+      modal.style.display = "none";
+    };
+
+    window.onclick = (event) => {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    };
+
+    initGame();
+
+    leftBoxes.forEach((box) => {
+      box.addEventListener("touchstart", touchStartHandler);
+      box.addEventListener("touchmove", touchMoveHandler);
+      box.addEventListener("touchend", touchEndHandler);
+    });
+
+    rightBoxes.forEach((box) => {
+      box.addEventListener("touchstart", touchStartHandler);
+      box.addEventListener("touchmove", touchMoveHandler);
+      box.addEventListener("touchend", touchEndHandler);
+    });
+  </script>
+</body>
+</html>
